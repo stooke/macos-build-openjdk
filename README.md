@@ -12,8 +12,8 @@ Edit the script to disable either Shenandoah or JavaFX.
 The easiest way to get a working JDK11u is:
 
 ```
-  git clone https://github.com/stooke/jdk11u-xcode10.git
-  ./jdk11u-xcode10/build11.sh
+  git clone https://github.com/stooke/jdk11u-macos.git
+  ./jdk11u-macos/build11.sh
 ```
 
 ## Install Prerequisites
