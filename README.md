@@ -18,9 +18,11 @@ The easiest way to get a working JDK11u is:
 
 ## Install Prerequisites
 
-Some of these are also required for building JDK 11, so your efforts won't be wasted here.  The build script will download and install these (except for Xcode; that one's on you) in a local location, so no action is required if you use these scripts
+The build script will download and install these (except for Xcode; that one's on you) in a local location, so no action is required if you use these scripts
 
+```
 Install XCode 9 or 10, autoconf, mercurial, a bootstrap JDK, and (for javaFX) ant, maven and cmake
+```
 
 If you're using the XCode 11 beta, you may need to disable precompiled headers: `--disable-precompiled-headers`.  There seems to be an issue with honouring include file paths.
 
