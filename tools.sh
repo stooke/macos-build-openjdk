@@ -163,7 +163,7 @@ build_bootstrap_jdk10() {
 	if test -d "$TOOL_DIR/jdk10u" ; then
 		return
 	fi
-	download_and_open https://github.com/AdoptOpenJDK/openjdk8-binaries/releases/download/jdk8u202-b08/OpenJDK8U-jdk_x64_mac_hotspot_8u202b08.tar.gz "$TOOL_DIR/jdk10u"
+	download_and_open https://github.com/AdoptOpenJDK/openjdk10-binaries/releases/download/jdk-10.0.2%2B13.1/OpenJDK10U-jdk_x64_mac_hotspot_10.0.2_13.tar.gz "$TOOL_DIR/jdk10u"
 }
 
 build_bootstrap_jdk11() {
