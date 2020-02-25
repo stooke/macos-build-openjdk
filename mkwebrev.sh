@@ -3,6 +3,7 @@
 set -e
 
 jdk=jdk11u-dev
+jdk=jdk
 
 REPO_DIR=`pwd`/$jdk
 SCRIPT_DIR=`pwd`/xx
@@ -44,7 +45,6 @@ mkrevs() {
 }
 
 revert() {
-set -x
 	pushd "$REPO_DIR" >/dev/null
 	hg revert .
 	for a in $repos ; do 
@@ -59,5 +59,5 @@ set -x
 
 #revert
 
-mkrevs 8223309-jdk11u 00
+mkrevs 8216354-jdk 00
 

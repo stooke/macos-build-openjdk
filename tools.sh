@@ -180,6 +180,20 @@ build_bootstrap_jdk12() {
 	download_and_open https://github.com/AdoptOpenJDK/openjdk12-binaries/releases/download/jdk-12%2B33/OpenJDK12U-jdk_x64_mac_hotspot_12_33.tar.gz "$TOOL_DIR/jdk12u"
 }
 
+build_bootstrap_jdk13() {
+	if test -d "$TOOL_DIR/jdk13u" ; then
+			return
+	fi
+	download_and_open https://github.com/AdoptOpenJDK/openjdk13-binaries/releases/download/jdk13u-2019-12-03-14-28/OpenJDK13U-jdk_x64_mac_hotspot_2019-12-03-14-28.tar.gz "$TOOL_DIR/jdk13u"
+}
+
+build_bootstrap_jdk_latest() {
+	if test -d "$TOOL_DIR/jdk-latest" ; then
+			return
+	fi
+	download_and_open ???? "$TOOL_DIR/jdk-latest"
+}
+
 build_make() {
 	# make is already in macos, but kind of old
 	if test -d "$TOOL_DIR/make-4.2.1" ; then
@@ -247,6 +261,12 @@ buildtools() {
         	fi
 		if test $tool = "bootstrap_jdk12" ; then
         	    export JAVA_HOME=$TOOL_DIR/jdk12u/Contents/Home
+        	fi
+		if test $tool = "bootstrap_jdk13" ; then
+        	    export JAVA_HOME=$TOOL_DIR/jdk13u/Contents/Home
+        	fi
+		if test $tool = "bootstrap_jdk_latest" ; then
+        	    export JAVA_HOME=$TOOL_DIR/jdk-latest/Contents/Home
         	fi
 	done
 }
