@@ -4,10 +4,10 @@
 JDK_BASE=jdk11u-dev
 
 # set true to build Shanendoah, false for normal build
-BUILD_SHENANDOAH=true
+BUILD_SHENANDOAH=false
 
 # set true to build javaFX, false for no javaFX
-BUILD_JAVAFX=true
+BUILD_JAVAFX=false
 
 ## release, fastdebug, slowdebug
 DEBUG_LEVEL=fastdebug
@@ -102,6 +102,15 @@ test_jdk() {
 	popd
 }
 
+test_tier1() {
+	TESTS=$*
+	JDK_HOME="$JDK_DIR/build/$JDK_CONF/images/jdk"
+	pushd "$JDK_DIR"
+#	make run-test-tier1
+	make run-test TEST="jtreg:test/hotspot:tier1"
+	popd
+}
+
 test_gtest() {
 	TESTS=$*
 	JDK_HOME="$JDK_DIR/build/$JDK_CONF/images/jdk"
@@ -189,6 +198,7 @@ configure_jdk
 build_jdk
 #test_gtest test/hotspot/gtest/classfile/test_symbolTable.cpp
 #test_jdk jdk/java/net/httpclient/ByteArrayPublishers.java
+test_tier1
 
 JDK_IMAGE_DIR="$JDK_DIR/build/$JDK_CONF/images/jdk"
 
