@@ -2,6 +2,7 @@
 
 # define JDK and repo
 JDK_BASE=jdk11u-dev
+#JDK_TAG=jdk-11.0.2+0
 
 # set true to build Shanendoah, false for normal build
 BUILD_SHENANDOAH=false
@@ -15,7 +16,6 @@ DEBUG_LEVEL=fastdebug
 ### no need to change anything below this line unless something went wrong
 
 set -e
-set -x
 
 # define build environment
 BUILD_DIR=`pwd`
@@ -48,6 +48,11 @@ clone_jdk() {
 	else
 		pushd "$JDK_DIR"
 		hg pull -u
+		popd
+	fi
+	if [ "x$JDK_TAG" != "x" ] ; then
+		pushd "$JDK_DIR"
+		hg update -r "$JDK_TAG"
 		popd
 	fi
 }
@@ -88,7 +93,8 @@ revert_jdk() {
 
 build_jdk() {
 	pushd "$JDK_DIR"
-	IMAGES="bootcycle-images legacy-images"
+	#IMAGES="bootcycle-images legacy-images"
+	IMAGES="images"
 	make $IMAGES CONF=$JDK_CONF
 	popd
 }
@@ -177,7 +183,7 @@ else
 	unset JAVAFX_TOOLS
 fi
 
-. "$SCRIPT_DIR/tools.sh" "$TOOL_DIR" autoconf mercurial bootstrap_jdk11 jtreg webrev $JAVAFX_TOOLS
+. "$SCRIPT_DIR/tools.sh" "$TOOL_DIR" autoconf mercurial bootstrap_jdk10 jtreg webrev $JAVAFX_TOOLS
 
 
 if $BUILD_JAVAFX ; then

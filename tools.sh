@@ -163,7 +163,7 @@ build_bootstrap_jdk10() {
 	if test -d "$TOOL_DIR/jdk10u" ; then
 		return
 	fi
-	download_and_open https://github.com/AdoptOpenJDK/openjdk8-binaries/releases/download/jdk8u202-b08/OpenJDK8U-jdk_x64_mac_hotspot_8u202b08.tar.gz "$TOOL_DIR/jdk10u"
+	download_and_open https://github.com/AdoptOpenJDK/openjdk10-binaries/releases/download/jdk-10.0.2%2B13.1/OpenJDK10U-jdk_x64_mac_hotspot_10.0.2_13.tar.gz "$TOOL_DIR/jdk10u"
 }
 
 build_bootstrap_jdk11() {
@@ -178,6 +178,20 @@ build_bootstrap_jdk12() {
 			return
 	fi
 	download_and_open https://github.com/AdoptOpenJDK/openjdk12-binaries/releases/download/jdk-12%2B33/OpenJDK12U-jdk_x64_mac_hotspot_12_33.tar.gz "$TOOL_DIR/jdk12u"
+}
+
+build_bootstrap_jdk13() {
+	if test -d "$TOOL_DIR/jdk13u" ; then
+			return
+	fi
+	download_and_open https://github.com/AdoptOpenJDK/openjdk13-binaries/releases/download/jdk13u-2019-12-03-14-28/OpenJDK13U-jdk_x64_mac_hotspot_2019-12-03-14-28.tar.gz "$TOOL_DIR/jdk13u"
+}
+
+build_bootstrap_jdk_latest() {
+	if test -d "$TOOL_DIR/jdk-latest" ; then
+			return
+	fi
+	download_and_open ???? "$TOOL_DIR/jdk-latest"
 }
 
 build_make() {
@@ -247,6 +261,12 @@ buildtools() {
         	fi
 		if test $tool = "bootstrap_jdk12" ; then
         	    export JAVA_HOME=$TOOL_DIR/jdk12u/Contents/Home
+        	fi
+		if test $tool = "bootstrap_jdk13" ; then
+        	    export JAVA_HOME=$TOOL_DIR/jdk13u/Contents/Home
+        	fi
+		if test $tool = "bootstrap_jdk_latest" ; then
+        	    export JAVA_HOME=$TOOL_DIR/jdk-latest/Contents/Home
         	fi
 	done
 }
