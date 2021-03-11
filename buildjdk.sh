@@ -61,6 +61,7 @@ configure_jdk() {
 	./configure --with-toolchain-type=clang \
             --includedir=$XCODE_DEVELOPER_PREFIX/Toolchains/XcodeDefault.xctoolchain/usr/include \
             --with-debug-level=$DEBUG_LEVEL \
+            --with-conf-name=$JDK_CONF \
             --with-jtreg="$TOOL_DIR/jtreg" \
             --with-boot-jdk=$JAVA_HOME $CONFIG_ARGS
 	popd
@@ -87,7 +88,7 @@ build_jdk() {
 
 test_jdk() {
 	TESTS=$*
-	JDK_HOME="$JDK_DIR/build/$JDK_CONFIG/images/jdk"
+	JDK_HOME="$JDK_DIR/build/$JDK_CONF/images/jdk"
 	JT_WORK="$BUILD_DIR/jtreg"
 	pushd "$JDK_DIR"
 	jtreg -w "$JT_WORK/work" -r "$JT_WORK/report" -jdk:$JDK_HOME $TESTS
