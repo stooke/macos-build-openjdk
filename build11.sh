@@ -79,6 +79,7 @@ configure_jdk() {
 	./configure --with-toolchain-type=clang \
             --includedir=$XCODE_DEVELOPER_PREFIX/Toolchains/XcodeDefault.xctoolchain/usr/include \
             --with-debug-level=$DEBUG_LEVEL \
+            --with-conf-name=$JDK_CONF \
             --with-jtreg="$TOOL_DIR/jtreg" \
             --with-boot-jdk=$JAVA_HOME $CONFIG_ARGS
 	popd
