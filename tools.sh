@@ -64,7 +64,7 @@ clone_or_update() {
 }
 
 build_ant() {
-	download_and_open http://apache.mirror.gtcomm.net/ant/binaries/apache-ant-1.10.6-bin.tar.gz "$TOOL_DIR/ant"
+	download_and_open http://apache.mirror.gtcomm.net/ant/binaries/apache-ant-1.10.9-bin.tar.gz "$TOOL_DIR/ant"
 }
 
 build_autoconf() {
@@ -84,8 +84,11 @@ build_automake() {
 	fi
 	download_and_open http://ftp.gnu.org/gnu/automake/automake-1.16.tar.gz "$TOOL_DIR/automake"
 	pushd "$TOOL_DIR/automake"
+	OLDPATH="$PATH"
+	PATH="$TOOL_INSTALL_ROOT/bin:$PATH"
 	./configure --prefix=$TOOL_INSTALL_ROOT
 	make install
+	PATH="$OLDPATH"
 	popd
 }
 
@@ -108,7 +111,7 @@ build_mvn() {
 	if test -d "$TOOL_DIR/apache-maven"; then
 		return
 	fi
-	download_and_open http://muug.ca/mirror/apache-dist/maven/maven-3/3.6.2/binaries/apache-maven-3.6.2-bin.tar.gz "$TOOL_DIR/apache-maven"
+	download_and_open http://muug.ca/mirror/apache-dist/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz "$TOOL_DIR/apache-maven"
 }
 
 build_mx() {
@@ -187,6 +190,13 @@ build_bootstrap_jdk13() {
 	download_and_open https://github.com/AdoptOpenJDK/openjdk13-binaries/releases/download/jdk13u-2019-12-03-14-28/OpenJDK13U-jdk_x64_mac_hotspot_2019-12-03-14-28.tar.gz "$TOOL_DIR/jdk13u"
 }
 
+build_bootstrap_jdk15() {
+	if test -d "$TOOL_DIR/jdk15" ; then
+			return
+	fi
+	download_and_open https://github.com/AdoptOpenJDK/openjdk15-binaries/releases/download/jdk-15.0.2%2B7/OpenJDK15U-jdk_x64_mac_hotspot_15.0.2_7.tar.gz "$TOOL_DIR/jdk15"
+}
+
 build_bootstrap_jdk_latest() {
 	if test -d "$TOOL_DIR/jdk-latest" ; then
 			return
@@ -222,7 +232,7 @@ build_webrev() {
 }
 
 build_jtreg() {
-	JTREG_URL=https://ci.adoptopenjdk.net/view/Dependencies/job/jtreg/lastSuccessfulBuild/artifact/jtreg-4.2-b14.tar.gz
+	JTREG_URL=https://ci.adoptopenjdk.net/view/Dependencies/job/jtreg/lastSuccessfulBuild/artifact/jtreg-4.2.0-tip.tar.gz
 	if test -d "$TOOL_DIR/jtreg" ; then
 			return
 	fi
@@ -264,6 +274,9 @@ buildtools() {
         	fi
 		if test $tool = "bootstrap_jdk13" ; then
         	    export JAVA_HOME=$TOOL_DIR/jdk13u/Contents/Home
+        	fi
+        if test $tool = "bootstrap_jdk15" ; then
+        	    export JAVA_HOME=$TOOL_DIR/jdk15/Contents/Home
         	fi
 		if test $tool = "bootstrap_jdk_latest" ; then
         	    export JAVA_HOME=$TOOL_DIR/jdk-latest/Contents/Home

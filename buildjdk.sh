@@ -4,7 +4,7 @@
 JDK_BASE=jdk
 
 # set true to build Shanendoah, false for normal build
-BUILD_SHENANDOAH=false
+BUILD_SHENANDOAH=true
 
 # set true to build javaFX, false for no javaFX
 BUILD_JAVAFX=false
@@ -15,7 +15,7 @@ DEBUG_LEVEL=fastdebug
 ### no need to change anything below this line unless something went wrong
 
 set -e
-
+set -x
 # define build environment
 BUILD_DIR=`pwd`
 pushd `dirname $0`
@@ -25,14 +25,7 @@ TOOL_DIR="$BUILD_DIR/tools"
 popd
 JDK_DIR="$BUILD_DIR/$JDK_BASE"
 JDK_CONF=macosx-x86_64-server-$DEBUG_LEVEL
-
-if $BUILD_SHENANDOAH ; then 
-	JDK_BASE=jdk
-	JDK_DIR="$BUILD_DIR/$JDK_BASE-shenandoah"
-	JDK_REPO=http://hg.openjdk.java.net/shenandoah/$JDK_BASE
-else
-	JDK_REPO=http://hg.openjdk.java.net/jdk/$JDK_BASE
-fi
+JDK_REPO=http://github.com/openjdk/jdk
 
 if $BUILD_JAVAFX ; then
   JAVAFX_REPO=http://hg.openjdk.java.net/openjfx/jfx-dev/rt
@@ -43,10 +36,10 @@ fi
 
 clone_jdk() {
 	if ! test -d "$JDK_DIR" ; then
-		hg clone $JDK_REPO "$JDK_DIR"
+		git clone $JDK_REPO "$JDK_DIR"
 	else
 		pushd "$JDK_DIR"
-		hg pull -u
+		git pull 
 		popd
 	fi
 }
@@ -54,7 +47,7 @@ clone_jdk() {
 patch_jdk() {
 	if test -f "$PATCH_DIR/mac-jdk14.patch" ; then
 		pushd "$JDK_DIR"
-		hg import -f --no-commit "$PATCH_DIR/mac-jdk14.patch"
+		git apply "$PATCH_DIR/mac-jdk14.patch"
 		popd
 	fi
 }
@@ -81,7 +74,7 @@ clean_jdk() {
 
 revert_jdk() {
 	pushd "$JDK_DIR"
-	hg revert .
+	git restore -- .
 	popd
 }
 
@@ -167,7 +160,7 @@ else
 	unset JAVAFX_TOOLS
 fi
 
-. "$SCRIPT_DIR/tools.sh" "$TOOL_DIR" autoconf mercurial bootstrap_jdk13 jtreg webrev $JAVAFX_TOOLS
+. "$SCRIPT_DIR/tools.sh" "$TOOL_DIR" autoconf mercurial bootstrap_jdk15 jtreg webrev $JAVAFX_TOOLS
 
 
 if $BUILD_JAVAFX ; then
