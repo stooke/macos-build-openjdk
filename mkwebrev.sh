@@ -36,28 +36,50 @@ mkrevs() {
 	# $1 CR $2 NUM
 	find "$REPO_DIR" -name \*.rej  -exec rm {} \; 2>/dev/null || true
 	find "$REPO_DIR" -name \*.orig -exec rm {} \; 2>/dev/null || true
-	WEBREV_DIR=$WEBREV_BASE/jdk-$1
-	mkwebrev "$REPO_DIR" $WEBREV_DIR/$2 $1
+	WEBREV_DIR="$WEBREV_BASE/jdk-$1/$2"
+	mkwebrev "$REPO_DIR" "$WEBREV_DIR/$2" $1
 	for a in $repos ; do 
 	  echo processing "$REPO_DIR/$a"
-	  mkwebrev "$REPO_DIR/$a" $WEBREV_DIR/$a.$2 $1
+	  mkwebrev "$REPO_DIR/$a" "$WEBREV_DIR/$a.$2" $1
 	done
+}
+
+update() {
+	pushd "$REPO_DIR" >/dev/null
+	find "$REPO_DIR" -name \*.rej  -exec rm {} \; 2>/dev/null || true 
+	find "$REPO_DIR" -name \*.orig -exec rm {} \; 2>/dev/null || true
+	hg pull -u
+	for a in $repos ; do 
+	  cd $a
+	  hg pull -u
+	  cd ..
+	done
+	popd >/dev/null
+}
+
+clean() {
+	rm -fr "$REPO_DIR/build"
+	find "$REPO_DIR" -name \*.rej  -exec rm {} \; 2>/dev/null || true 
+	find "$REPO_DIR" -name \*.orig -exec rm {} \; 2>/dev/null || true
 }
 
 revert() {
 	pushd "$REPO_DIR" >/dev/null
+	find "$REPO_DIR" -name \*.rej  -exec rm {} \; 2>/dev/null || true 
+	find "$REPO_DIR" -name \*.orig -exec rm {} \; 2>/dev/null || true
 	hg revert .
 	for a in $repos ; do 
 	  cd $a
 	  hg revert .
 	  cd ..
 	done
-	find "$REPO_DIR" -name \*.rej  -exec rm {} \; 2>/dev/null || true 
-	find "$REPO_DIR" -name \*.orig -exec rm {} \; 2>/dev/null || true
 	popd >/dev/null
 }
 
 #revert
+#update
+#cd "$REPO_DIR/jdk"
+#hg import -f --no-commit "$BUILD_DIR/8181872-jdk8.patch"
 
 mkrevs 8216354-jdk 00
 

@@ -1,16 +1,35 @@
 #!/bin/bash
 
 # usage: . ./tools.sh tooldir [tool]...
+OLDPATH="$PATH"
+
+set_os() {
+	IS_LINUX=false
+	if [ "`uname`" = "Linux" ] ; then
+		IS_LINUX=true
+	fi
+	IS_DARWIN=false
+	if [ "`uname`" = "Darwin" ] ; then
+		IS_DARWIN=true
+	fi
+}
 
 # define toolchain
-XCODE_APP=`dirname \`dirname \\\`xcode-select -p \\\`\``
-XCODE_VERSION=`/usr/bin/xcodebuild -version | sed -En 's/Xcode[[:space:]]+([0-9\.]*)/\1/p' | sed s/[.][0-9]*//`
-XCODE_DEVELOPER_PREFIX=$XCODE_APP/Contents/Developer
-CCTOOLCHAIN_PREFIX=$XCODE_APP/Contents/Developer/Toolchains/XcodeDefault.xctoolchain
-OLDPATH=$PATH
-export PATH=$TOOL_PREFIX/usr/bin:$PATH
-export PATH=$CCTOOLCHAIN_PREFIX/usr/bin:$PATH
-echo Using xcode version $XCODE_VERSION installed in $XCODE_APP
+find_xcode() {
+	XCODE_APP=`dirname \`dirname \\\`xcode-select -p \\\`\``
+    XCODE_VERSION=`/usr/bin/xcodebuild -version | sed -En 's/Xcode[[:space:]]+([0-9\.]*)/\1/p' | sed s/[.][0-9]*//`
+	XCODE_DEVELOPER_PREFIX=$XCODE_APP/Contents/Developer
+	CCTOOLCHAIN_PREFIX=$XCODE_APP/Contents/Developer/Toolchains/XcodeDefault.xctoolchain
+	OLDPATH=$PATH
+	export PATH=$CCTOOLCHAIN_PREFIX/usr/bin:$PATH
+	export PATH=$TOOL_PREFIX/usr/bin:$PATH
+	echo Using xcode version $XCODE_VERSION installed in $XCODE_APP
+}
+
+set_os
+if $IS_DARWIN ; then
+	find_xcode
+fi
 
 # define build environment
 TOOL_DIR="$1"
@@ -35,6 +54,7 @@ download_and_open() {
 	FILE="$DOWNLOAD_DIR/`basename $URL`"
 	DEST="$2"
 	if ! test -f "$FILE" ; then 
+		echo "downloading $1"
 		pushd "$DOWNLOAD_DIR"
 		curl -O -L --insecure "$URL"
 		popd
@@ -55,6 +75,7 @@ clone_or_update() {
 	URL="$1"
 	DEST="$2"
 	if ! test -d "$DEST" ; then 
+		echo "cloning $1"
 		git clone "$URL" "$DEST"
 	else
 		pushd "$DEST"
@@ -64,7 +85,7 @@ clone_or_update() {
 }
 
 build_ant() {
-	download_and_open http://apache.mirror.gtcomm.net/ant/binaries/apache-ant-1.10.9-bin.tar.gz "$TOOL_DIR/ant"
+	download_and_open https://mirror.dsrg.utoronto.ca/apache/ant/binaries/apache-ant-1.10.9-bin.tar.gz "$TOOL_DIR/ant"
 }
 
 build_autoconf() {
@@ -97,10 +118,12 @@ build_bison() {
 }
 
 build_cmake() {
-	if test -d "$TOOL_DIR/cmake" ; then 
-		return
+	if $IS_DARWIN ; then
+		if test -d "$TOOL_DIR/cmake" ; then 
+			return
+		fi
+		download_and_open https://github.com/Kitware/CMake/releases/download/v3.14.3/cmake-3.14.3-Darwin-x86_64.tar.gz "$TOOL_DIR/cmake"
 	fi
-	download_and_open https://github.com/Kitware/CMake/releases/download/v3.14.3/cmake-3.14.3-Darwin-x86_64.tar.gz "$TOOL_DIR/cmake"
 }
 
 build_libtool() {
@@ -111,7 +134,7 @@ build_mvn() {
 	if test -d "$TOOL_DIR/apache-maven"; then
 		return
 	fi
-	download_and_open http://muug.ca/mirror/apache-dist/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz "$TOOL_DIR/apache-maven"
+	download_and_open https://mirror.dsrg.utoronto.ca/apache/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz "$TOOL_DIR/apache-maven"
 }
 
 build_mx() {
@@ -132,6 +155,14 @@ build_freetype() {
 	pushd "$TOOL_DIR/freetype"
 	./configure
 	make
+    if $IS_DARWIN ; then
+set -x
+	cd objs/.libs
+	otool -L libfreetype.6.dylib
+	install_name_tool -change /usr/local/lib/libfreetype.6.dylib @rpath/libfreetype.6.dylib libfreetype.6.dylib
+	otool -L libfreetype.6.dylib
+set +x
+    fi
 	popd
 }
 
@@ -139,7 +170,7 @@ build_mercurial() {
 	if test -f "$TOOL_DIR/mercurial/hg" ; then
 		return
 	fi
-	download_and_open https://www.mercurial-scm.org/release/mercurial-4.9.tar.gz "$TOOL_DIR/mercurial"
+	download_and_open https://www.mercurial-scm.org/release/mercurial-5.3.tar.gz "$TOOL_DIR/mercurial"
 	pushd "$TOOL_DIR/mercurial"
 	make local
 	popd
@@ -156,31 +187,39 @@ build_re2c() {
 }
 
 build_bootstrap_jdk8() {
-	if test -d "$TOOL_DIR/jdk8u" ; then
-		return
+	if $IS_DARWIN ; then
+		if test -d "$TOOL_DIR/jdk8u" ; then
+			return
+		fi
+		download_and_open  https://github.com/AdoptOpenJDK/openjdk8-binaries/releases/download/jdk8u265-b01/OpenJDK8U-jdk_x64_mac_hotspot_8u265b01.tar.gz "$TOOL_DIR/jdk8u"
 	fi
-	download_and_open https://github.com/AdoptOpenJDK/openjdk8-binaries/releases/download/jdk8u202-b08/OpenJDK8U-jdk_x64_mac_hotspot_8u202b08.tar.gz "$TOOL_DIR/jdk8u"
 }
 
 build_bootstrap_jdk10() {
-	if test -d "$TOOL_DIR/jdk10u" ; then
-		return
+	if $IS_DARWIN ; then
+		if test -d "$TOOL_DIR/jdk10u" ; then
+			return
+		fi
+		download_and_open https://github.com/AdoptOpenJDK/openjdk8-binaries/releases/download/jdk8u202-b08/OpenJDK8U-jdk_x64_mac_hotspot_8u202b08.tar.gz "$TOOL_DIR/jdk10u"
 	fi
-	download_and_open https://github.com/AdoptOpenJDK/openjdk10-binaries/releases/download/jdk-10.0.2%2B13.1/OpenJDK10U-jdk_x64_mac_hotspot_10.0.2_13.tar.gz "$TOOL_DIR/jdk10u"
 }
 
 build_bootstrap_jdk11() {
-	if test -d "$TOOL_DIR/jdk11u" ; then
-			return
+	if $IS_DARWIN ; then
+		if test -d "$TOOL_DIR/jdk11u" ; then
+				return
+		fi
+		download_and_open https://github.com/AdoptOpenJDK/openjdk11-binaries/releases/download/jdk-11.0.2%2B9/OpenJDK11U-jdk_x64_mac_hotspot_11.0.2_9.tar.gz "$TOOL_DIR/jdk11u"
 	fi
-	download_and_open https://github.com/AdoptOpenJDK/openjdk11-binaries/releases/download/jdk-11.0.2%2B9/OpenJDK11U-jdk_x64_mac_hotspot_11.0.2_9.tar.gz "$TOOL_DIR/jdk11u"
 }
 
 build_bootstrap_jdk12() {
-	if test -d "$TOOL_DIR/jdk12u" ; then
-			return
+	if $IS_DARWIN ; then
+		if test -d "$TOOL_DIR/jdk12u" ; then
+				return
+		fi
+		download_and_open https://github.com/AdoptOpenJDK/openjdk12-binaries/releases/download/jdk-12%2B33/OpenJDK12U-jdk_x64_mac_hotspot_12_33.tar.gz "$TOOL_DIR/jdk12u"
 	fi
-	download_and_open https://github.com/AdoptOpenJDK/openjdk12-binaries/releases/download/jdk-12%2B33/OpenJDK12U-jdk_x64_mac_hotspot_12_33.tar.gz "$TOOL_DIR/jdk12u"
 }
 
 build_bootstrap_jdk13() {
@@ -257,47 +296,58 @@ buildtools() {
 	for tool in $* ; do 
 		echo "building $tool"
 		build_$tool
-		if test $tool == "bootstrap_jdk8" ; then
-			export JAVA_HOME=$TOOL_DIR/jdk8u/Contents/Home
-		fi
-		if test $tool = "bootstrap_jdk9" ; then
-		    export JAVA_HOME=$TOOL_DIR/jdk9u/Contents/Home
+		if $IS_DARWIN ; then
+			if test $tool == "bootstrap_jdk8" ; then
+				export JAVA_HOME=$TOOL_DIR/jdk8u/Contents/Home
+			fi
+			if test $tool = "bootstrap_jdk9" ; then
+			    export JAVA_HOME=$TOOL_DIR/jdk9u/Contents/Home
+			fi
+			if test $tool = "bootstrap_jdk10" ; then
+			    export JAVA_HOME=$TOOL_DIR/jdk10u/Contents/Home
+			fi
+			if test $tool = "bootstrap_jdk11" ; then
+		    	    export JAVA_HOME=$TOOL_DIR/jdk11u/Contents/Home
+			fi
+			if test $tool = "bootstrap_jdk12" ; then
+			    export JAVA_HOME=$TOOL_DIR/jdk12u/Contents/Home
         	fi
-		if test $tool = "bootstrap_jdk10" ; then
-        	    export JAVA_HOME=$TOOL_DIR/jdk10u/Contents/Home
-	        fi
-		if test $tool = "bootstrap_jdk11" ; then
-            	    export JAVA_HOME=$TOOL_DIR/jdk11u/Contents/Home
-        	fi
-		if test $tool = "bootstrap_jdk12" ; then
-        	    export JAVA_HOME=$TOOL_DIR/jdk12u/Contents/Home
-        	fi
-		if test $tool = "bootstrap_jdk13" ; then
+    		if test $tool = "bootstrap_jdk13" ; then
         	    export JAVA_HOME=$TOOL_DIR/jdk13u/Contents/Home
         	fi
-        if test $tool = "bootstrap_jdk15" ; then
+            if test $tool = "bootstrap_jdk15" ; then
         	    export JAVA_HOME=$TOOL_DIR/jdk15/Contents/Home
         	fi
-		if test $tool = "bootstrap_jdk_latest" ; then
+	    	if test $tool = "bootstrap_jdk_latest" ; then
         	    export JAVA_HOME=$TOOL_DIR/jdk-latest/Contents/Home
         	fi
+		fi
 	done
 }
 
-export PATH=$OLDPATH
-export PATH=$TOOL_DIR/ant/bin:$PATH
-export PATH=$TOOL_DIR/apache-maven/bin:$PATH
-export PATH=$TOOL_DIR/cmake/CMake.app/Contents/bin:$PATH
-export PATH=$TOOL_DIR/jtreg/bin:$PATH
-export PATH=$TOOL_DIR/mercurial:$PATH
-export PATH=$TOOL_DIR/mx:$PATH
-export PATH=$TOOL_DIR/ninja:$PATH
-export PATH=$TOOL_DIR/re2c/builddir/dist/bin:$PATH
-export PATH=$TOOL_DIR/webrev:$PATH
-export PATH=$JAVA_HOME/bin:$PATH
-export PATH=$TOOL_INSTALL_ROOT/bin:$PATH
+build_tool_path() {
+	export PATH=$OLDPATH
+	export PATH=$TOOL_DIR/ant/bin:$PATH
+	export PATH=$TOOL_DIR/apache-maven/bin:$PATH
+	if $IS_DARWIN ; then
+		export PATH=$TOOL_DIR/cmake/CMake.app/Contents/bin:$PATH
+	else
+		export PATH=$TOOL_DIR/cmake/CMake.app/bin:$PATH
+	fi
+	export PATH=$TOOL_DIR/jtreg/bin:$PATH
+	export PATH=$TOOL_DIR/mercurial:$PATH
+	export PATH=$TOOL_DIR/mx:$PATH
+	export PATH=$TOOL_DIR/ninja:$PATH
+	export PATH=$TOOL_DIR/re2c/builddir/dist/bin:$PATH
+	export PATH=$TOOL_DIR/webrev:$PATH
+	export PATH=$JAVA_HOME/bin:$PATH
+	export PATH=$TOOL_INSTALL_ROOT/bin:$PATH
+}
+
+
 mkdir -p "$TMP_DIR"
 shift
 buildtools $*
+build_tool_path
 rm -fr "$TMP_DIR"
 
