@@ -3,6 +3,13 @@
 # define JDK and repo
 JDK_BASE=jdk
 
+TARGET_ARCH=x86_64
+#TARGET_ARCH=aarch64
+
+if [ .$TARGET_ARCH == .aarch64 ] ; then 
+	TARGET_ARGS="--host=aarch64-apple-darwin"
+fi
+
 # set true to build javaFX, false for no javaFX
 BUILD_JAVAFX=false
 
@@ -21,7 +28,7 @@ PATCH_DIR="$SCRIPT_DIR/jdk11u-patch"
 TOOL_DIR="$BUILD_DIR/tools"
 popd
 JDK_DIR="$BUILD_DIR/$JDK_BASE"
-JDK_CONF=macosx-x86_64-server-$DEBUG_LEVEL
+JDK_CONF=macosx-$TARGET_ARCH-server-$DEBUG_LEVEL
 JDK_REPO=http://github.com/openjdk/jdk
 
 if $BUILD_JAVAFX ; then
@@ -61,7 +68,7 @@ configure_jdk() {
             --with-debug-level=$DEBUG_LEVEL \
             --with-conf-name=$JDK_CONF \
             --with-jtreg="$TOOL_DIR/jtreg" \
-            --with-boot-jdk=$JAVA_HOME $CONFIG_ARGS
+            --with-boot-jdk=$JAVA_HOME $CONFIG_ARGS $TARGET_ARGS
 	popd
 }
 
