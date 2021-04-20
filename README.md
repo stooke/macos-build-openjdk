@@ -1,4 +1,4 @@
-# Compiling OpenJDK 17 (preview) using Xcode 12 (including cross-compiling to aarch64 a.k.a. M1)
+## Compiling OpenJDK 17 (preview) using Xcode 12 (including cross-compiling to aarch64 a.k.a. M1)
 
 How to compile OpenJDK head with the latest Xcode on macOS Big Sur.
 This will produce either an x86_64 JDK or an aarch64 JDK - you need ot change the BUILD_TARGET_ARCH line at the top of buildjdk.sh
@@ -11,7 +11,7 @@ This script works by restarting in x86_64 mode if on an M1, and then either doin
   ./jdk11u-macos/buildjdk.sh
 ```
   
-# Compiling OpenJDK 11u using XCode 12
+## Compiling OpenJDK 11u using XCode 12
 
 How to compile JDK 11 with the latest Xcode on macOS High Sierra, to Big Sur
 (Currently tested with Xcode 9.4/macOS 10.13.6 and Xcode 10.3/macOS 10.14.6)
