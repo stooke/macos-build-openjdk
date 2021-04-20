@@ -197,6 +197,13 @@ build_bootstrap_jdk15() {
 	download_and_open https://github.com/AdoptOpenJDK/openjdk15-binaries/releases/download/jdk-15.0.2%2B7/OpenJDK15U-jdk_x64_mac_hotspot_15.0.2_7.tar.gz "$TOOL_DIR/jdk15"
 }
 
+build_bootstrap_jdk16() {
+	if test -d "$TOOL_DIR/jdk16" ; then
+			return
+	fi
+	download_and_open https://github.com/AdoptOpenJDK/openjdk16-binaries/releases/download/jdk16u-2021-04-20-02-22/OpenJDK16U-jdk_x64_mac_hotspot_2021-04-20-02-22.tar.gz "$TOOL_DIR/jdk16"
+}
+
 build_bootstrap_jdk_latest() {
 	if test -d "$TOOL_DIR/jdk-latest" ; then
 			return
@@ -275,8 +282,11 @@ buildtools() {
 		if test $tool = "bootstrap_jdk13" ; then
         	    export JAVA_HOME=$TOOL_DIR/jdk13u/Contents/Home
         	fi
-        if test $tool = "bootstrap_jdk15" ; then
+                if test $tool = "bootstrap_jdk15" ; then
         	    export JAVA_HOME=$TOOL_DIR/jdk15/Contents/Home
+        	fi
+                if test $tool = "bootstrap_jdk16" ; then
+        	    export JAVA_HOME=$TOOL_DIR/jdk16/Contents/Home
         	fi
 		if test $tool = "bootstrap_jdk_latest" ; then
         	    export JAVA_HOME=$TOOL_DIR/jdk-latest/Contents/Home

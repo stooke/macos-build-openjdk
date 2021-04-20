@@ -3,9 +3,6 @@
 # define JDK and repo
 JDK_BASE=jdk
 
-# set true to build Shanendoah, false for normal build
-BUILD_SHENANDOAH=true
-
 # set true to build javaFX, false for no javaFX
 BUILD_JAVAFX=false
 
@@ -15,7 +12,7 @@ DEBUG_LEVEL=fastdebug
 ### no need to change anything below this line unless something went wrong
 
 set -e
-set -x
+
 # define build environment
 BUILD_DIR=`pwd`
 pushd `dirname $0`
@@ -28,7 +25,7 @@ JDK_CONF=macosx-x86_64-server-$DEBUG_LEVEL
 JDK_REPO=http://github.com/openjdk/jdk
 
 if $BUILD_JAVAFX ; then
-  JAVAFX_REPO=http://hg.openjdk.java.net/openjfx/jfx-dev/rt
+  JAVAFX_REPO=https://github.com/openjdk/jfx.git
   JAVAFX_BUILD_DIR="$BUILD_DIR/jfx"
 fi
 
@@ -56,7 +53,8 @@ configure_jdk() {
 	pushd "$JDK_DIR"
 	if $BUILD_JAVAFX ; then
 		CONFIG_ARGS=--with-import-modules=$JAVAFX_BUILD_DIR/build/modular-sdk
-	fi 
+	fi
+	#CONFIG_ARGS="$CONFIG_ARGS --with-native-debug-symbols=zipped "
 	chmod 755 ./configure
 	./configure --with-toolchain-type=clang \
             --includedir=$XCODE_DEVELOPER_PREFIX/Toolchains/XcodeDefault.xctoolchain/usr/include \
@@ -81,7 +79,8 @@ revert_jdk() {
 
 build_jdk() {
 	pushd "$JDK_DIR"
-	IMAGES="bootcycle-images legacy-images"
+	#IMAGES="bootcycle-images legacy-images"
+	IMAGES="images"
 	make $IMAGES CONF=$JDK_CONF
 	popd
 }
@@ -108,7 +107,7 @@ test_gtest() {
 clone_javafx() {
   if [ ! -d $JAVAFX_BUILD_DIR ] ; then
     cd `dirname $JAVAFX_BUILD_DIR`
-    hg clone $JAVAFX_REPO "$JAVAFX_BUILD_DIR"
+    git clone $JAVAFX_REPO "$JAVAFX_BUILD_DIR"
   fi
   chmod 755 "$JAVAFX_BUILD_DIR/gradlew"
 }
@@ -116,7 +115,7 @@ clone_javafx() {
 patch_javafx() {
 	pushd "$JAVAFX_BUILD_DIR"
 	if [ -f "$SCRIPT_DIR/javafx11.patch" ] ; then
-		hg import -f --no-commit "$SCRIPT_DIR/javafx11.patch"
+		git apply "$SCRIPT_DIR/javafx11.patch"
 	fi
 	chmod 755 "$JAVAFX_BUILD_DIR/gradlew"
 	popd
@@ -124,7 +123,7 @@ patch_javafx() {
 
 revert_javafx() {
 	pushd "$JAVAFX_BUILD_DIR"
-	hg revert .
+	git restore .
 	popd
 }
 
@@ -161,7 +160,7 @@ else
 	unset JAVAFX_TOOLS
 fi
 
-. "$SCRIPT_DIR/tools.sh" "$TOOL_DIR" autoconf mercurial bootstrap_jdk15 jtreg webrev $JAVAFX_TOOLS
+. "$SCRIPT_DIR/tools.sh" "$TOOL_DIR" autoconf bootstrap_jdk16 jtreg webrev $JAVAFX_TOOLS
 
 
 if $BUILD_JAVAFX ; then
@@ -169,17 +168,17 @@ if $BUILD_JAVAFX ; then
 	revert_javafx
 	patch_javafx
 	#clean_javafx
-	build_javafx
+	time build_javafx
 	#test_javafx
 	build_javafx_demos
 fi
 
 clone_jdk
-clean_jdk
-revert_jdk
-patch_jdk
+#clean_jdk
+#revert_jdk
+#patch_jdk
 configure_jdk
-build_jdk
+time build_jdk
 #test_gtest test/hotspot/gtest/classfile/test_symbolTable.cpp
 #test_jdk jdk/java/net/httpclient/ByteArrayPublishers.java
 
@@ -189,12 +188,8 @@ if $BUILD_JAVAFX ; then
 	WITH_JAVAFX_STR=-javafx
 fi
 
-if $BUILD_SHENANDOAH ; then
-	WITH_SHENANDOAH_STR=-shenandoah
-fi
-
 # create distribution zip
 pushd "$JDK_IMAGE_DIR"
-zip -r "$BUILD_DIR/$JDK_BASE$WITH_JAVAFX_STR$WITH_SHENANDOAH_STR.zip" .
+zip -r "$BUILD_DIR/$JDK_BASE$WITH_JAVAFX_STR.zip" .
 popd
 
