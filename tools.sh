@@ -330,7 +330,7 @@ buildtools() {
         		fi
 	    		if test $tool = "bootstrap_jdk_latest" ; then
         		    export JAVA_HOME=$TOOL_DIR/jdk-latest/Contents/Home
-        		if
+        		fi
 		fi
 	done
 }
