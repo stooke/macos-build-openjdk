@@ -16,13 +16,20 @@ The easiest way to get a working JDK11u is:
   ./jdk11u-macos/build11.sh
 ```
 
+The easiest way to get a working JDK17 (preview) is:
+
+```
+  git clone https://github.com/stooke/jdk11u-macos.git
+  ./jdk11u-macos/buildjdk.sh
+```
+
 ## Install Prerequisites
 
-The build script will download and install these (except for Xcode; that one's on you) in a local location, so no action is required if you use these scripts
+The build script will download and install these (except for Xcode; that one's on you) in a local location, so no action is required if you use these scripts.
 
+You must download Xcode, install it in /Applications, (run it once to accept the license) and run
 ```
-Install XCode 9, 10, 11 or 12, autoconf, mercurial, a bootstrap JDK, and (for javaFX) ant, maven and cmake
+  sudo xcode-select -s /Applications/Xcode.app
 ```
 
-If you're using the XCode 11 beta, you may need to disable precompiled headers: `--disable-precompiled-headers`.  There seems to be an issue with honouring include file paths.
 
