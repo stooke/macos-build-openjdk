@@ -10,7 +10,19 @@ This script works by restarting in x86_64 mode if on an M1, and then either doin
   git clone https://github.com/stooke/jdk11u-macos.git
   ./jdk11u-macos/buildjdk.sh
 ```
-  
+
+## Compiling OpenJDK 17 (preview) into a Fat (x86_64 and aarch64) JDK
+
+This script compiles both architectures, then combines them into a "fat" JDK.
+After that it produces a fatjdk.zip and a fatdsym.zip file.
+
+### Quick start:
+
+```
+  git clone https://github.com/stooke/jdk11u-macos.git
+  ./jdk11u-macos/mkfat.sh
+```
+
 ## Compiling OpenJDK 11u using XCode 12
 
 How to compile JDK 11 with the latest Xcode on macOS High Sierra, to Big Sur
