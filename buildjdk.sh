@@ -3,10 +3,6 @@
 # define JDK and repo
 JDK_BASE=jdk
 
-# aarch64 or x86_64
-export BUILD_TARGET_ARCH=x86_64
-#export BUILD_TARGET_ARCH=aarch64
-
 # if we're on a macos m1 machine, we can run in x86_64 or native aarch64/arm64 mode.
 # currently the build script only supports building on x86_64 hosts.
 if [ "`uname`" = "Darwin" ] ; then
@@ -14,6 +10,18 @@ if [ "`uname`" = "Darwin" ] ; then
 		echo "building on aarch64 - restarting in x86_64 mode"
 		arch -x86_64 "$0" $@
 		exit $?
+	fi
+fi
+
+# aarch64 or x86_64
+if [ .$BUILD_TARGET_ARCH == . ] ; then
+	# default to build system architecture
+	if [ "`uname -m`" = "arm64" ] ; then
+		echo "defaulting to build aarch64"
+		export BUILD_TARGET_ARCH=aarch64
+	else
+		echo "defaulting to build x86_64"
+		export BUILD_TARGET_ARCH=x86_64
 	fi
 fi
 
@@ -39,7 +47,7 @@ PATCH_DIR="$SCRIPT_DIR/jdk11u-patch"
 TOOL_DIR="$BUILD_DIR/tools"
 popd
 JDK_DIR="$BUILD_DIR/$JDK_BASE"
-JDK_CONF=macosx-$TARGET_ARCH-server-$DEBUG_LEVEL
+JDK_CONF=macos-$BUILD_TARGET_ARCH-server-$DEBUG_LEVEL
 JDK_REPO=http://github.com/openjdk/jdk
 
 if $BUILD_JAVAFX ; then
@@ -208,6 +216,6 @@ fi
 
 # create distribution zip
 pushd "$JDK_IMAGE_DIR"
-zip -r "$BUILD_DIR/$JDK_BASE$WITH_JAVAFX_STR.zip" .
+zip -r "$BUILD_DIR/$JDK_BASE-$BUILD_TARGET_ARCH$WITH_JAVAFX_STR.zip" .
 popd
 
