@@ -3,6 +3,30 @@
 # define JDK and repo
 JDK_BASE=jdk
 
+usage()
+{
+  echo "usage : build_jdk.sh [ aarch64 | x86_64 ]"
+  exit 1
+}
+
+# aarch64 or x86_64
+export BUILD_TARGET_ARCH=x86_64
+#export BUILD_TARGET_ARCH=aarch64
+
+if [ $# -gt 1 ]; then
+  usage
+fi
+
+if [ $# -gt 0 ] ; then
+  if [ $1 == "x86_64" ] ; then
+    export BUILD_TARGET_ARCH=x86_64
+  elif [ $1 == "aarch64" ] ; then
+    export BUILD_TARGET_ARCH=aarch64
+  else
+    usage
+  fi
+fi
+
 # if we're on a macos m1 machine, we can run in x86_64 or native aarch64/arm64 mode.
 # currently the build script only supports building on x86_64 hosts.
 if [ "`uname`" = "Darwin" ] ; then
