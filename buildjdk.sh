@@ -9,10 +9,6 @@ usage()
   exit 1
 }
 
-# aarch64 or x86_64
-export BUILD_TARGET_ARCH=x86_64
-#export BUILD_TARGET_ARCH=aarch64
-
 if [ $# -gt 1 ]; then
   usage
 fi
