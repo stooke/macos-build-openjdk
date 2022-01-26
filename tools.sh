@@ -85,7 +85,7 @@ clone_or_update() {
 }
 
 build_ant() {
-	download_and_open https://mirror.dsrg.utoronto.ca/apache/ant/binaries/apache-ant-1.10.9-bin.tar.gz "$TOOL_DIR/ant"
+	download_and_open https://mirror.dsrg.utoronto.ca/apache/ant/binaries/apache-ant-1.10.11-bin.tar.gz "$TOOL_DIR/ant"
 }
 
 build_autoconf() {
@@ -278,7 +278,7 @@ build_webrev() {
 }
 
 build_jtreg() {
-	JTREG_URL=https://ci.adoptopenjdk.net/view/Dependencies/job/jtreg/lastSuccessfulBuild/artifact/jtreg-4.2.0-tip.tar.gz
+	JTREG_URL=https://ci.adoptopenjdk.net/view/Dependencies/job/dependency_pipeline/lastSuccessfulBuild/artifact/jtreg/jtreg-6.1+1.tar.gz
 	if test -d "$TOOL_DIR/jtreg" ; then
 			return
 	fi

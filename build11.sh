@@ -8,15 +8,28 @@ JDK_BASE=jdk11u-dev
 BUILD_SHENANDOAH=true
 
 # set true to build javaFX, false for no javaFX
-BUILD_JAVAFX=true
+BUILD_JAVAFX=false
 
 ## release, fastdebug, slowdebug
 DEBUG_LEVEL=fastdebug
+
+# aarch64 does not work yet - only x86_64
+export BUILD_TARGET_ARCH=x86_64
 
 ### no need to change anything below this line unless something went wrong
 
 set -x
 set -e
+
+# if we're on a macos m1 machine, we can run in x86_64 or native aarch64/arm64 mode.
+# currently the build script only supports building x86_64 binaries and only on x86_64 hosts.
+if [ "`uname`" = "Darwin" ] ; then
+	if [ "`uname -m`" = "arm64" ] ; then
+		echo "building on aarch64 - restarting in x86_64 mode"
+		arch -x86_64 "$0" $@
+		exit $?
+	fi
+fi
 
 # define build environment
 BUILD_DIR=`pwd`
@@ -28,14 +41,14 @@ popd
 JDK_DIR="$BUILD_DIR/$JDK_BASE"
 JDK_CONF=macosx-x86_64-normal-server-$DEBUG_LEVEL
 
-JDK_REPO=http://hg.openjdk.java.net/jdk-updates/$JDK_BASE
-
+JDK_REPO=https://github.com/openjdk/$JDK_BASE
 if $BUILD_SHENANDOAH ; then
   JDK_CONF="${JDK_CONF}-shenandoah"
 fi
 
 if $BUILD_JAVAFX ; then
   JAVAFX_REPO=http://hg.openjdk.java.net/openjfx/jfx-dev/rt
+  JAVAFX_REPO=https://github.com/openjdk/jfx11u.git
   JAVAFX_BUILD_DIR="$BUILD_DIR/jfx11"
 fi
 
@@ -44,26 +57,31 @@ fi
 clone_jdk() {
     progress "cloning jdk repo"
 	if ! test -d "$JDK_DIR" ; then
-		hg clone $JDK_REPO "$JDK_DIR"
+		git clone $JDK_REPO "$JDK_DIR"
 	else
 		pushd "$JDK_DIR"
-		hg pull -u
+		git pull
 		popd
 	fi
 	if [ "x$JDK_TAG" != "x" ] ; then
 		pushd "$JDK_DIR"
-		hg update -r "$JDK_TAG"
+		git checkout "$JDK_TAG"
 		popd
 	fi
 }
 
 patch_jdk() {
     progress "patching jdk repo"
-	if test -f "$PATCH_DIR/mac-jdk11u.patch" ; then
-		pushd "$JDK_DIR"
-		hg import -f --no-commit "$PATCH_DIR/mac-jdk11u.patch"
-		popd
-	fi
+    if test -f "$PATCH_DIR/mac-jdk11u.patch" ; then
+	pushd "$JDK_DIR"
+	git apply "$PATCH_DIR/mac-jdk11u.patch"
+	popd
+    fi
+    if test -f "$PATCH_DIR/fix-failed-to-determine-xcode-version.patch" ; then
+	pushd "$JDK_DIR"
+	git apply "$PATCH_DIR/fix-failed-to-determine-xcode-version.patch"
+	popd
+    fi
 }
 
 configure_jdk() {
@@ -95,7 +113,7 @@ clean_jdk() {
 revert_jdk() {
     progress "reverting jdk repo"
 	pushd "$JDK_DIR"
-	hg revert .
+	git restore .
 	popd
 }
 
@@ -140,8 +158,7 @@ clone_javafx() {
   if [ ! -d $JAVAFX_BUILD_DIR ] ; then
     progress "cloning javafx repo"
     cd `dirname $JAVAFX_BUILD_DIR`
-    git clone https://github.com/openjdk/jfx.git "$JAVAFX_BUILD_DIR"
-    #hg clone $JAVAFX_REPO "$JAVAFX_BUILD_DIR"
+    git clone https://github.com/openjdk/jfx11u.git "$JAVAFX_BUILD_DIR"
   fi
   chmod 755 "$JAVAFX_BUILD_DIR/gradlew"
 }
@@ -206,7 +223,7 @@ else
 	unset JAVAFX_TOOLS
 fi
 
-. "$SCRIPT_DIR/tools.sh" "$TOOL_DIR" autoconf mercurial bootstrap_jdk10 bootstrap_jdk11 jtreg webrev $JAVAFX_TOOLS
+. "$SCRIPT_DIR/tools.sh" "$TOOL_DIR" autoconf bootstrap_jdk10 bootstrap_jdk11 jtreg webrev $JAVAFX_TOOLS
 
 
 if $BUILD_JAVAFX ; then
@@ -220,9 +237,9 @@ if $BUILD_JAVAFX ; then
 fi
 
 clone_jdk
-#clean_jdk
-#revert_jdk
-#patch_jdk
+clean_jdk
+revert_jdk
+patch_jdk
 configure_jdk
 build_jdk
 
