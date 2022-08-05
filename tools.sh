@@ -85,7 +85,7 @@ clone_or_update() {
 }
 
 build_ant() {
-	download_and_open https://mirror.dsrg.utoronto.ca/apache/ant/binaries/apache-ant-1.10.11-bin.tar.gz "$TOOL_DIR/ant"
+	download_and_open https://mirror.dsrg.utoronto.ca/apache/ant/binaries/apache-ant-1.10.12-bin.tar.gz "$TOOL_DIR/ant"
 }
 
 build_autoconf() {
