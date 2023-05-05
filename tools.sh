@@ -49,14 +49,42 @@ if test ".$TMP_DIR" = "." ; then
 	TMP_DIR="$TMP/$$.work"
 fi
 
-download_and_open() {
+download_and_open_pkg() {
 	URL="$1"
-	FILE="$DOWNLOAD_DIR/`basename $URL`"
+	FILE="$TMP_DIR/current.pkg"
 	DEST="$2"
 	if ! test -f "$FILE" ; then 
-		echo "downloading $1"
+		echo "downloading $1 to `basename $FILE`"
 		pushd "$DOWNLOAD_DIR"
-		curl -O -L --insecure "$URL"
+		curl --output "$FILE" -L --insecure "$URL"
+		popd
+	fi
+	if test -d "$DEST" ; then
+		return
+	fi
+	rm -fr "$TMP_DIR/expanded-package"	
+	mkdir -p "$TMP_DIR/expanded-package"	
+	pushd "$TMP_DIR/expanded-package" >/dev/null
+	tar -xvf "$FILE"
+	popd >/dev/null
+	PAYLOAD_FILE=`find "$TMP_DIR/expanded-package" -type f -name Payload`
+	mkdir "$TMP_DIR/payload"
+	pushd "$TMP_DIR/payload" >/dev/null
+	tar -xvf "$PAYLOAD_FILE"
+	mkdir -p "$DEST"
+	mv `find . -type d -name Contents` "$DEST/Contents"
+	popd >/dev/null
+	#rm -fr "$TMP_DIR/dno" "$FILE"
+}
+
+download_and_open() {
+	URL="$1"
+	FILE="$DOWNLOAD_DIR/current"
+	DEST="$2"
+	if ! test -f "$FILE" ; then 
+		echo "downloading $1 to `basename $FILE`"
+		pushd "$DOWNLOAD_DIR"
+		curl --output "$FILE" -L --insecure "$URL"
 		popd
 	fi
 	if test -d "$DEST" ; then
@@ -85,7 +113,7 @@ clone_or_update() {
 }
 
 build_ant() {
-	download_and_open https://mirror.dsrg.utoronto.ca/apache/ant/binaries/apache-ant-1.10.12-bin.tar.gz "$TOOL_DIR/ant"
+	download_and_open https://dlcdn.apache.org//ant/binaries/apache-ant-1.10.13-bin.zip "$TOOL_DIR/ant"
 }
 
 build_autoconf() {
@@ -134,7 +162,7 @@ build_mvn() {
 	if test -d "$TOOL_DIR/apache-maven"; then
 		return
 	fi
-	download_and_open https://mirror.dsrg.utoronto.ca/apache/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz "$TOOL_DIR/apache-maven"
+	download_and_open https://dlcdn.apache.org/maven/maven-3/3.9.1/binaries/apache-maven-3.9.1-bin.tar.gz "$TOOL_DIR/apache-maven"
 }
 
 build_mx() {
@@ -231,16 +259,51 @@ build_bootstrap_jdk13() {
 
 build_bootstrap_jdk15() {
 	if test -d "$TOOL_DIR/jdk15" ; then
-			return
+		return
 	fi
 	download_and_open https://github.com/AdoptOpenJDK/openjdk15-binaries/releases/download/jdk-15.0.2%2B7/OpenJDK15U-jdk_x64_mac_hotspot_15.0.2_7.tar.gz "$TOOL_DIR/jdk15"
 }
 
-build_bootstrap_jdk16() {
-	if test -d "$TOOL_DIR/jdk16" ; then
-			return
+build_bootstrap_jdk16_x86_64() {
+	if test -d "$TOOL_DIR/jdk16_x86_64" ; then
+		return
 	fi
-	download_and_open https://github.com/AdoptOpenJDK/openjdk16-binaries/releases/download/jdk16u-2021-04-20-02-22/OpenJDK16U-jdk_x64_mac_hotspot_2021-04-20-02-22.tar.gz "$TOOL_DIR/jdk16"
+	download_and_open https://github.com/AdoptOpenJDK/openjdk16-binaries/releases/download/jdk16u-2021-05-08-12-45/OpenJDK16U-jdk_x64_mac_hotspot_2021-05-08-12-45.tar.gz "$TOOL_DIR/jdk16_x86_64"
+}
+
+build_bootstrap_jdk16_arm64() {
+	echo "there is no OpenJDK 16 aarch64 release - using x86_64 (no good for JavaFX)"
+	build_bootstrap_jdk16_x86_64
+}
+
+build_bootstrap_jdk16() {
+	if [ "`uname -m`" = "arm64" ] ; then
+		build_bootstrap_jdk16_x86_64
+	else
+		build_bootstrap_jdk16_x86_64
+	fi
+}
+
+build_bootstrap_jdk17_x86_64() {
+	if test -d "$TOOL_DIR/jdk17_x86_64" ; then
+		return
+	fi
+	download_and_open_pkg https://api.adoptium.net/v3/installer/latest/17/ga/mac/x64/jdk/hotspot/normal/eclipse?project=jdk "$TOOL_DIR/jdk17_x86_64"
+}
+
+build_bootstrap_jdk17_arm64() {
+	if test -d "$TOOL_DIR/jdk17_arm64" ; then
+		return
+	fi
+	download_and_open_pkg https://api.adoptium.net/v3/installer/latest/17/ga/mac/aarch64/jdk/hotspot/normal/eclipse?project=jdk "$TOOL_DIR/jdk17_arm64"
+}
+
+build_bootstrap_jdk17() {
+	if [ "`uname -m`" = "arm64" ] ; then
+		build_bootstrap_jdk17_arm64
+	else
+		build_bootstrap_jdk17_x86_64
+	fi
 }
 
 build_bootstrap_jdk_latest() {
@@ -314,23 +377,39 @@ buildtools() {
 			    export JAVA_HOME=$TOOL_DIR/jdk10u/Contents/Home
 			fi
 			if test $tool = "bootstrap_jdk11" ; then
-		    	    export JAVA_HOME=$TOOL_DIR/jdk11u/Contents/Home
+		    	export JAVA_HOME=$TOOL_DIR/jdk11u/Contents/Home
 			fi
 			if test $tool = "bootstrap_jdk12" ; then
 			    export JAVA_HOME=$TOOL_DIR/jdk12u/Contents/Home
 			fi
   	  		if test $tool = "bootstrap_jdk13" ; then
-       	 		    export JAVA_HOME=$TOOL_DIR/jdk13u/Contents/Home
-       	 		fi
-                	if test $tool = "bootstrap_jdk15" ; then
-        		    export JAVA_HOME=$TOOL_DIR/jdk15/Contents/Home
-        		fi
-        	        if test $tool = "bootstrap_jdk16" ; then
-        		    export JAVA_HOME=$TOOL_DIR/jdk16/Contents/Home
-        		fi
-	    		if test $tool = "bootstrap_jdk_latest" ; then
-        		    export JAVA_HOME=$TOOL_DIR/jdk-latest/Contents/Home
-        		fi
+       	 		export JAVA_HOME=$TOOL_DIR/jdk13u/Contents/Home
+			fi
+			if test $tool = "bootstrap_jdk15" ; then
+				export JAVA_HOME=$TOOL_DIR/jdk15/Contents/Home
+			fi
+			if test $tool = "bootstrap_jdk16" ; then
+				export JAVA_HOME=$TOOL_DIR/jdk16_x86_64/Contents/Home
+			fi
+			if test $tool = "bootstrap_jdk16_x86_64" ; then
+				export JAVA_HOME=$TOOL_DIR/jdk16_x86_64/Contents/Home
+			fi
+			if test $tool = "bootstrap_jdk17" ; then
+				if [ "`uname -m`" = "arm64" ] ; then
+					export JAVA_HOME=$TOOL_DIR/jdk17_arm64/Contents/Home
+				else
+					export JAVA_HOME=$TOOL_DIR/jdk17_x86_64/Contents/Home
+				fi
+			fi
+			if test $tool = "bootstrap_jdk17_arm64" ; then
+				export JAVA_HOME=$TOOL_DIR/jdk17_arm64/Contents/Home
+			fi
+			if test $tool = "bootstrap_jdk17_x86_64" ; then
+				export JAVA_HOME=$TOOL_DIR/jdk17_x86_64/Contents/Home
+			fi
+			if test $tool = "bootstrap_jdk_latest" ; then
+				export JAVA_HOME=$TOOL_DIR/jdk-latest/Contents/Home
+			fi
 		fi
 	done
 }
