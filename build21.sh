@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # define JDK and repo
-JDK_VER=
-JDK_BASE=jdk$JDK_VER
+JDK_VER=21u
+JDK_BASE=jdk${JDK_VER}-dev
 #JDK_TAG=
 
 # set true to build Shanendoah, false for normal build
@@ -105,7 +105,7 @@ TOOL_DIR="$BUILD_DIR/tools"
 popd
 JDK_DIR="$BUILD_DIR/$JDK_BASE"
 JDK_CONF=macos-${BUILD_TARGET_ARCH}-${DEBUG_LEVEL}${WITH_JAVAFX_STR}${WITH_SHENANDOAH_STR}
-JDK_REPO=http://github.com/openjdk/jdk
+JDK_REPO=http://github.com/openjdk/${JDK_BASE}
 
 if $BUILD_JAVAFX ; then
   JAVAFX_REPO=https://github.com/openjdk/jfx.git
@@ -153,7 +153,6 @@ configure_jdk() {
             --includedir=$XCODE_DEVELOPER_PREFIX/Toolchains/XcodeDefault.xctoolchain/usr/include \
             --with-debug-level=$DEBUG_LEVEL \
             --with-conf-name=$JDK_CONF \
-            --with-jtreg="$TOOL_DIR/jtreg" \
             --disable-warnings-as-errors \
             --with-boot-jdk=$JAVA_HOME ${CONFIG_ARGS} ${TARGET_ARGS}
 	popd
@@ -280,7 +279,7 @@ progress() {
 
 if $DOWNLOAD_TOOLS ; then
 
-	. "$SCRIPT_DIR/tools.sh" "$TOOL_DIR" bootstrap_jdk21
+	. "$SCRIPT_DIR/tools.sh" "$TOOL_DIR" bootstrap_jdk20
 
 	if $BUILD_JAVAFX ; then
 		JAVAFX_TOOLS="ant cmake mvn" 
@@ -288,7 +287,7 @@ if $DOWNLOAD_TOOLS ; then
 		unset JAVAFX_TOOLS
 	fi
 
-	. "$SCRIPT_DIR/tools.sh" "$TOOL_DIR" autoconf jtreg webrev $JAVAFX_TOOLS
+	. "$SCRIPT_DIR/tools.sh" "$TOOL_DIR" autoconf jtreg $JAVAFX_TOOLS
 
 fi
 

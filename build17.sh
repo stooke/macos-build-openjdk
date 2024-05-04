@@ -9,8 +9,8 @@ JDK_BASE=jdk$JDK_VER-dev
 BUILD_SHENANDOAH=true
 
 # set true to build javaFX, false for no javaFX
-BUILD_JAVAFX=true
-INCLUDE_JAVAFX=$BUILD_JAVA_FX
+BUILD_JAVAFX=false
+INCLUDE_JAVAFX=$BUILD_JAVAFX
 
 ## release, fastdebug, slowdebug
 DEBUG_LEVEL=fastdebug
@@ -140,12 +140,13 @@ configure_jdk() {
 	if $BUILD_SHENANDOAH ; then
 		CONFIG_ARGS="$CONFIG_ARGS --enable-jvm-feature-shenandoahgc"
 	fi
+	#            --with-jtreg="$TOOL_DIR/jtreg" 
+
 	chmod 755 ./configure
 	./configure --with-toolchain-type=clang \
             --includedir=$XCODE_DEVELOPER_PREFIX/Toolchains/XcodeDefault.xctoolchain/usr/include \
             --with-debug-level=$DEBUG_LEVEL \
             --with-conf-name=$JDK_CONF \
-            --with-jtreg="$TOOL_DIR/jtreg" \
             --disable-warnings-as-errors \
             --with-boot-jdk=$JAVA_HOME $CONFIG_ARGS $TARGET_ARGS
 	popd
@@ -168,7 +169,7 @@ revert_jdk() {
 build_jdk() {
 	progress "building jdk"
 	pushd "$JDK_DIR"
-	#IMAGES="bootcycle-images legacy-images"
+	#IMAGES="bootcycle-images"
 	IMAGES="images"
 	#MAKELOGLEVEL=LOG=debug
 	make $IMAGES CONF=$JDK_CONF $MAKELOGLEVEL
@@ -273,7 +274,7 @@ if $DOWNLOAD_TOOLS ; then
 		unset JAVAFX_TOOLS
 	fi
 
-	. "$SCRIPT_DIR/tools.sh" "$TOOL_DIR" autoconf bootstrap_jdk17 jtreg webrev $JAVAFX_TOOLS
+	. "$SCRIPT_DIR/tools.sh" "$TOOL_DIR" autoconf bootstrap_jdk17 jtreg $JAVAFX_TOOLS
 
 fi
 

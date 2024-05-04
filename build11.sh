@@ -268,13 +268,15 @@ progress() {
 
 if $DOWNLOAD_TOOLS ; then
 
+	. "$SCRIPT_DIR/tools.sh" "$TOOL_DIR" bootstrap_jdk11
+
 	if $BUILD_JAVAFX ; then
 		JAVAFX_TOOLS="ant cmake mvn" 
 	else
 		unset JAVAFX_TOOLS
 	fi
 
-	. "$SCRIPT_DIR/tools.sh" "$TOOL_DIR" autoconf bootstrap_jdk10 bootstrap_jdk11 jtreg webrev $JAVAFX_TOOLS
+	. "$SCRIPT_DIR/tools.sh" "$TOOL_DIR" autoconf jtreg $JAVAFX_TOOLS
 
 fi
 
@@ -320,10 +322,11 @@ fi
 
 # create distribution zip
 pushd "$JDK_IMAGE_DIR/.."
-mv "$JDK_IMAGE_DIR" $JDK_BASE-$BUILD_TARGET_ARCH$WITH_JAVAFX_STR
-zip -r "$BUILD_DIR/$JDK_BASE-$BUILD_TARGET_ARCH$WITH_JAVAFX_STR{WITH_SHENANDOAH_STR}.zip" $JDK_BASE-$BUILD_TARGET_ARCH$WITH_JAVAFX_STR{WITH_SHENANDOAH_STR}
-zip "$BUILD_DIR/$JDK_BASE$WITH_JAVAFX_STR$WITH_SHENANDOAH_STR-debug.zip" `find . | grep -v \*\.dSYM`
-mv $JDK_BASE-$BUILD_TARGET_ARCH$WITH_JAVAFX_STR{WITH_SHENANDOAH_STR} "$JDK_IMAGE_DIR"
+JDK_STR="${BUILD_TARGET_ARCH}${WITH_JAVAFX_STR}${WITH_SHENANDOAH_STR}"
+mv "$JDK_IMAGE_DIR" "${JDK_BASE}-${JDK_STR}"
+zip -r "${BUILD_DIR}/${JDK_BASE}-${JDK_STR}.zip" "${JDK_BASE}-${JDK_STR}"
+zip "${BUILD_DIR}/${JDK_BASE}-${JDK_STR}-debug.zip" `find . | grep -v \*\.dSYM`
+mv "${JDK_BASE}-${JDK_STR}" "$JDK_IMAGE_DIR"
 
 popd
 
