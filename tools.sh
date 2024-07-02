@@ -310,6 +310,22 @@ build_bootstrap_jdk21_arm64() {
     build_bootstrap_jdkX 21 arm64 aarch64
 }
 
+build_bootstrap_jdk22_x86_64() {
+    build_bootstrap_jdkX 22 x86_64 x86
+}       
+        
+build_bootstrap_jdk22_arm64() {
+    build_bootstrap_jdkX 22 arm64 aarch64
+}
+
+build_bootstrap_jdk23_x86_64() {
+    build_bootstrap_jdkX 23 x86_64 x86
+}       
+        
+build_bootstrap_jdk23_arm64() {
+    build_bootstrap_jdkX 23 arm64 aarch64
+}
+
 build_bootstrap_jdk11() {
 	if [ "`uname -m`" = "arm64" ] ; then
 		build_bootstrap_jdk11_arm64
@@ -347,6 +363,22 @@ build_bootstrap_jdk21() {
 			build_bootstrap_jdk21_arm64
 	else
 			build_bootstrap_jdk21_x86_64
+	fi
+}
+
+build_bootstrap_jdk22() {
+	if [ "`uname -m`" = "arm64" ] ; then
+			build_bootstrap_jdk22_arm64
+	else
+			build_bootstrap_jdk22_x86_64
+	fi
+}
+
+build_bootstrap_jdk23() {
+	if [ "`uname -m`" = "arm64" ] ; then
+			build_bootstrap_jdk23_arm64
+	else
+			build_bootstrap_jdk23_x86_64
 	fi
 }
 
@@ -388,6 +420,7 @@ build_jtreg() {
 	# see https://ci.adoptium.net/view/Dependencies/job/dependency_pipeline/lastSuccessfulBuild/artifact/jtreg
 	JTREG_URL=https://ci.adoptopenjdk.net/view/Dependencies/job/dependency_pipeline/lastSuccessfulBuild/artifact/jtreg/jtreg-6.1+1.tar.gz
 	JTREG_URL=https://ci.adoptopenjdk.net/view/Dependencies/job/dependency_pipeline/lastSuccessfulBuild/artifact/jtreg/jtreg-7.3.1+1.tar.gz
+	JTREG_URL=https://ci.adoptium.net/view/Dependencies/job/dependency_pipeline/lastSuccessfulBuild/artifact/jtreg/jtreg-7.4+1.tar.gz
 	if test -d "$TOOL_DIR/jtreg" ; then
 			return
 	fi
@@ -485,6 +518,34 @@ buildtools() {
 			fi
 			if test $tool = "bootstrap_jdk21_x86_64" ; then
 				export JAVA_HOME=$TOOL_DIR/jdk21_x86_64/Contents/Home
+			fi
+
+			if test $tool = "bootstrap_jdk22" ; then
+				if [ "`uname -m`" = "arm64" ] ; then
+					export JAVA_HOME=$TOOL_DIR/jdk22_arm64/Contents/Home
+				else
+					export JAVA_HOME=$TOOL_DIR/jdk22_x86_64/Contents/Home
+				fi
+			fi
+			if test $tool = "bootstrap_jdk22_arm64" ; then
+				export JAVA_HOME=$TOOL_DIR/jdk22_arm64/Contents/Home
+			fi
+			if test $tool = "bootstrap_jdk22_x86_64" ; then
+				export JAVA_HOME=$TOOL_DIR/jdk22_x86_64/Contents/Home
+			fi
+
+			if test $tool = "bootstrap_jdk23" ; then
+				if [ "`uname -m`" = "arm64" ] ; then
+					export JAVA_HOME=$TOOL_DIR/jdk23_arm64/Contents/Home
+				else
+					export JAVA_HOME=$TOOL_DIR/jdk23_x86_64/Contents/Home
+				fi
+			fi
+			if test $tool = "bootstrap_jdk23_arm64" ; then
+				export JAVA_HOME=$TOOL_DIR/jdk23_arm64/Contents/Home
+			fi
+			if test $tool = "bootstrap_jdk23_x86_64" ; then
+				export JAVA_HOME=$TOOL_DIR/jdk23_x86_64/Contents/Home
 			fi
 
 			if test $tool = "bootstrap_jdk_latest" ; then

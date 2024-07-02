@@ -280,7 +280,7 @@ progress() {
 
 if $DOWNLOAD_TOOLS ; then
 
-	. "$SCRIPT_DIR/tools.sh" "$TOOL_DIR" bootstrap_jdk21
+	. "$SCRIPT_DIR/tools.sh" "$TOOL_DIR" bootstrap_jdk22
 
 	if $BUILD_JAVAFX ; then
 		JAVAFX_TOOLS="ant cmake mvn" 
@@ -288,7 +288,7 @@ if $DOWNLOAD_TOOLS ; then
 		unset JAVAFX_TOOLS
 	fi
 
-	. "$SCRIPT_DIR/tools.sh" "$TOOL_DIR" autoconf jtreg webrev $JAVAFX_TOOLS
+	. "$SCRIPT_DIR/tools.sh" "$TOOL_DIR" autoconf jtreg $JAVAFX_TOOLS
 
 fi
 
