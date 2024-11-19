@@ -10,10 +10,12 @@ BUILD_SHENANDOAH=true
 
 # set true to build javaFX, false for no javaFX
 BUILD_JAVAFX=true
-INCLUDE_JAVAFX=$BUILD_JAVA_FX
+BUILD_JAVAFX=false
+INCLUDE_JAVAFX=$BUILD_JAVAFX
 
 ## release, fastdebug, slowdebug
 DEBUG_LEVEL=fastdebug
+#DEBUG_LEVEL=slowdebug
 
 RUN_UNDER_ROSETTA=false
 CONFIGURE_JDK=true
@@ -74,6 +76,7 @@ fi
 
 if [ .$BUILD_TARGET_ARCH == .aarch64 ] ; then 
 	TARGET_ARGS="--host=aarch64-apple-darwin"
+	TARGET_ARGS=
 fi
 
 ### no need to change anything below this line unless something went wrong
@@ -107,30 +110,22 @@ clone_jdk() {
     progress "cloning jdk repo"
 	if ! test -d "$JDK_DIR" ; then
 		git clone $JDK_REPO "$JDK_DIR"
-	else
-		pushd "$JDK_DIR"
-		git pull
-		popd
-	fi
-	if [ "x$JDK_TAG" != "x" ] ; then
-		pushd "$JDK_DIR"
-		git checkout "$JDK_TAG"
-		popd
+		if [ "x$JDK_TAG" != "x" ] ; then
+			pushd "$JDK_DIR"
+			git checkout "$JDK_TAG"
+			popd
+		fi
+		patch_jdk
 	fi
 }
 
 patch_jdk() {
 	progress "patching jdk repo"
-	if test -f "$PATCH_DIR/mac-jdk$JDK_VER.patch" ; then
+	for patch in $PATCH_DIR/*.patch ; do {
 		pushd "$JDK_DIR"
-		git apply "$PATCH_DIR/mac-jdk$JDK_VER.patch"
+		git apply $patch
 		popd
-	fi
-    if test -f "$PATCH_DIR/fix-failed-to-determine-xcode-version.patch" ; then
-	pushd "$JDK_DIR"
-	#git apply "$PATCH_DIR/fix-failed-to-determine-xcode-version.patch"
-	popd
-    fi
+	done
 }
 
 configure_jdk() {
@@ -268,7 +263,7 @@ progress() {
 
 if $DOWNLOAD_TOOLS ; then
 
-	. "$SCRIPT_DIR/tools.sh" "$TOOL_DIR" bootstrap_jdk11
+	. "$SCRIPT_DIR/fetchjdk.sh" "$TOOL_DIR" bootstrap_jdk11
 
 	if $BUILD_JAVAFX ; then
 		JAVAFX_TOOLS="ant cmake mvn" 
@@ -299,7 +294,6 @@ if $BUILD_JDK ; then
 	clone_jdk
 	#clean_jdk
 	#revert_jdk
-	#patch_jdk
 	configure_jdk
 	time build_jdk
 fi

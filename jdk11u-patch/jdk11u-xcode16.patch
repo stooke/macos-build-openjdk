@@ -1,0 +1,17 @@
+diff --git a/make/autoconf/flags-cflags.m4 b/make/autoconf/flags-cflags.m4
+index 8ead0e22d6..a405c0f004 100644
+--- a/make/autoconf/flags-cflags.m4
++++ b/make/autoconf/flags-cflags.m4
+@@ -301,9 +301,9 @@ AC_DEFUN([FLAGS_SETUP_OPTIMIZATION],
+     if test "x$OPENJDK_TARGET_OS" = xmacosx; then
+       # On MacOSX we optimize for size, something
+       # we should do for all platforms?
+-      C_O_FLAG_HIGHEST_JVM="-Os"
+-      C_O_FLAG_HIGHEST="-Os"
+-      C_O_FLAG_HI="-Os"
++      C_O_FLAG_HIGHEST_JVM="-O1"
++      C_O_FLAG_HIGHEST="-O1"
++      C_O_FLAG_HI="-O1"
+       C_O_FLAG_NORM="-Os"
+       C_O_FLAG_DEBUG_JVM=""
+     else

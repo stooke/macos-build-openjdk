@@ -2,7 +2,7 @@
 
 # define JDK and repo
 JDK_VER=21u
-JDK_BASE=jdk${JDK_VER}-dev
+JDK_BASE=jdk$JDK_VER-dev
 #JDK_TAG=
 
 # set true to build Shanendoah, false for normal build
@@ -15,12 +15,15 @@ INCLUDE_JAVAFX=$BUILD_JAVAFX
 
 ## release, fastdebug, slowdebug
 DEBUG_LEVEL=fastdebug
+MAKELOGLEVEL=LOG=info
 
-RUN_UNDER_ROSETTA=false
-CONFIGURE_JDK=true
 CLEAN_JDK=false
+CONFIGURE_JDK=true
+#CONFIGURE_JDK=false
 BUILD_JDK=true
+BUILD_IMAGES=true
 TEST_JDK=false
+MAKE_ZIPS=false
 
 # NOTE: always true - downloading tools also adds them to the path
 DOWNLOAD_TOOLS=true
@@ -37,6 +40,9 @@ if [ $# -gt 1 ]; then
   usage
 fi
 
+# first, figure out what is the target platform: aarch64 or x86_64
+
+# did the user specify the platform?
 if [ $# -gt 0 ] ; then
   if [ $1 == "x86_64" ] ; then
     echo "build target x86_64"
@@ -44,12 +50,15 @@ if [ $# -gt 0 ] ; then
   elif [ $1 == "aarch64" ] ; then
     echo "build target aarch64"
     export BUILD_TARGET_ARCH=aarch64
+  elif [ $1 == "arm64" ] ; then
+    echo "build target aarch64"
+    export BUILD_TARGET_ARCH=aarch64
   else
     usage
   fi
 fi
 
-# aarch64 or x86_64
+# use the default, the build platform
 if [ .$BUILD_TARGET_ARCH == . ] ; then
 	# default to build system architecture
 	if [ "`uname -m`" = "arm64" ] ; then
@@ -61,6 +70,7 @@ if [ .$BUILD_TARGET_ARCH == . ] ; then
 	fi
 fi
 
+# if we're on aarch64 and want to build x86_64, use rosetta
 RUN_UNDER_ROSETTA=false
 if [ "`uname -m`" = "arm64" ] ; then
 	if [ "$BUILD_TARGET_ARCH" = "x86_64" ] ; then
@@ -80,8 +90,11 @@ if $RUN_UNDER_ROSETTA ; then
 	fi
 fi
 
+TARGET_ARGS=
 if [ .$BUILD_TARGET_ARCH == .aarch64 ] ; then 
-	TARGET_ARGS="--host=aarch64-apple-darwin"
+	if [ "`uname -m`" != "arm64" ] ; then
+		TARGET_ARGS="--host=aarch64-apple-darwin"
+	fi
 fi
 
 ### no need to change anything below this line unless something went wrong
@@ -152,7 +165,12 @@ configure_jdk() {
 	./configure --with-toolchain-type=clang \
             --includedir=$XCODE_DEVELOPER_PREFIX/Toolchains/XcodeDefault.xctoolchain/usr/include \
             --with-debug-level=$DEBUG_LEVEL \
+            --enable-jvm-feature-jvmti \
+            --enable-jvm-feature-jvmci \
+            --enable-jvm-feature-jfr \
+            --enable-unlimited-crypto=yes \
             --with-conf-name=$JDK_CONF \
+            --with-jtreg="$TOOL_DIR/jtreg" \
             --disable-warnings-as-errors \
             --with-boot-jdk=$JAVA_HOME ${CONFIG_ARGS} ${TARGET_ARGS}
 	popd
@@ -172,12 +190,21 @@ revert_jdk() {
 	popd
 }
 
-build_jdk() {
+build_jdk_images() {
 	progress "building jdk"
 	pushd "$JDK_DIR"
 	#IMAGES="bootcycle-images"
 	IMAGES="images"
-	#MAKELOGLEVEL=LOG=debug
+	#make CONF=${JDK_CONF} reconfigure
+	make ${IMAGES} CONF=${JDK_CONF} ${MAKELOGLEVEL}
+	popd
+}
+
+build_hotspot() {
+	progress "building jdk"
+	pushd "$JDK_DIR"
+	#IMAGES="bootcycle-images"
+	IMAGES="hotspot"
 	make ${IMAGES} CONF=${JDK_CONF} ${MAKELOGLEVEL}
 	popd
 }
@@ -186,6 +213,7 @@ test_jdk() {
 	TESTS=$*
 	JDK_HOME="$JDK_DIR/build/$JDK_CONF/images/jdk"
 	JT_WORK="$BUILD_DIR/jtreg"
+	rm -fr "$JT_WORK"
 	pushd "$JDK_DIR"
 	jtreg -w "$JT_WORK/work" -r "$JT_WORK/report" -jdk:$JDK_HOME $TESTS
 	popd
@@ -278,17 +306,13 @@ progress() {
 #### build the world
 
 if $DOWNLOAD_TOOLS ; then
-
-	. "$SCRIPT_DIR/tools.sh" "$TOOL_DIR" bootstrap_jdk20
-
+	. "$SCRIPT_DIR/fetchjdk.sh" "$TOOL_DIR" bootstrap_jdk20
 	if $BUILD_JAVAFX ; then
 		JAVAFX_TOOLS="ant cmake mvn" 
 	else
 		unset JAVAFX_TOOLS
 	fi
-
 	. "$SCRIPT_DIR/tools.sh" "$TOOL_DIR" autoconf jtreg $JAVAFX_TOOLS
-
 fi
 
 set -x
@@ -307,13 +331,23 @@ if $BUILD_JAVAFX ; then
 fi
 
 if $BUILD_JDK ; then
-	clone_jdk
-	clean_jdk
-	#revert_jdk
-	#patch_jdk
-	configure_jdk
-	time build_jdk
+	#clone_jdk
+	if $CLEAN_JDK ; then
+		clean_jdk
+	fi
+	if $CONFIGURE_JDK ; then
+		configure_jdk
+	fi
+	if $BUILD_IMAGES ; then
+		time build_jdk_images
+	else
+		time build_hotspot
+	fi
 fi
+
+#test_jdk test/hotspot/jtreg/serviceability/dcmd/vm/SystemDumpMapTest.java
+#test_jdk test/hotspot/jtreg/serviceability/dcmd/vm/SystemMapTest.java
+#test_jdk jdk/java/net/httpclient/ByteArrayPublishers.java
 
 if $TEST_JDK ; then
 	test_gtest test/hotspot/gtest/classfile/test_symbolTable.cpp
@@ -323,13 +357,13 @@ fi
 
 JDK_IMAGE_DIR="$JDK_DIR/build/$JDK_CONF/images/jdk"
 
-# create distribution zip
-pushd "$JDK_IMAGE_DIR/.."
-IMAGE_DIR=$JDK_BASE-${BUILD_TARGET_ARCH}${WITH_JAVAFX_STR}${WITH_SHENANDOAH_STR}
-mv "$JDK_IMAGE_DIR" $IMAGE_DIR
-zip -r "$BUILD_DIR/$IMAGE_DIR.zip" $IMAGE_DIR
-zip "$BUILD_DIR/$IMAGE_DIR-debug.zip" `find . | grep -v \*\.dSYM`
-mv $IMAGE_DIR "$JDK_IMAGE_DIR"
-
-popd
+if $MAKE_ZIPS ; then
+	# create distribution zip
+	pushd "$JDK_IMAGE_DIR/.."
+	IMAGE_DIR=$JDK_BASE-${BUILD_TARGET_ARCH}${WITH_JAVAFX_STR}${WITH_SHENANDOAH_STR}
+	mv "$JDK_IMAGE_DIR" $IMAGE_DIR
+	zip -r "$BUILD_DIR/$IMAGE_DIR.zip" $IMAGE_DIR
+	zip "$BUILD_DIR/$IMAGE_DIR-debug.zip" `find . | grep -v \*\.dSYM`
+	mv $IMAGE_DIR "$JDK_IMAGE_DIR"
+fi
 
