@@ -17,10 +17,12 @@ INCLUDE_JAVAFX=$BUILD_JAVAFX
 DEBUG_LEVEL=fastdebug
 MAKELOGLEVEL=LOG=info
 
-CLEAN_JDK=false
+CLEAN_JDK=true
+#CLEAN_JDK=false
 CONFIGURE_JDK=true
 #CONFIGURE_JDK=false
 BUILD_JDK=true
+#BUILD_JDK=false
 BUILD_IMAGES=true
 TEST_JDK=false
 MAKE_ZIPS=false
@@ -334,8 +336,6 @@ if $BUILD_JDK ; then
 	#clone_jdk
 	if $CLEAN_JDK ; then
 		clean_jdk
-		revert_jdk
-		patch_jdk
 	fi
 	if $CONFIGURE_JDK ; then
 		configure_jdk
@@ -348,7 +348,7 @@ if $BUILD_JDK ; then
 fi
 
 test_jdk test/hotspot/jtreg/serviceability/dcmd/vm/SystemDumpMapTest.java
-#test_jdk test/hotspot/jtreg/serviceability/dcmd/vm/SystemMapTest.java
+test_jdk test/hotspot/jtreg/serviceability/dcmd/vm/SystemMapTest.java
 #test_jdk jdk/java/net/httpclient/ByteArrayPublishers.java
 
 if $TEST_JDK ; then
